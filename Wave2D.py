@@ -1,6 +1,8 @@
 import numpy as np
 import sympy as sp
 from scipy import sparse
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
 
 x, y, t = sp.symbols("x,y,t")
 
@@ -238,9 +240,43 @@ def test_convergence_wave2d_neumann():
 
 
 def test_exact_wave2d():
-    raise NotImplementedError("The test_exact_wave2d function is not implemented yet.")
+    N = 100
+    Nt = 10
+    cfl = 2**(-1/2)
+    _, err1 = Wave2D()(N=N, Nt=Nt, cfl=cfl)
+    for err in err1:
+        assert err < 1e-12
+    _, err2 = Wave2D_Neumann()(N=N, Nt=Nt, cfl=cfl)
+    for err in err2:
+        assert err < 1e-12
+
+def generate_animation():
+    solver = Wave2D_Neumann()
+    N = 100
+
+    data = solver(N=N, Nt=100, cfl=2 ** (-1 / 2), mx=2, my=2, store_data=4)
+    xij, yij = solver.create_mesh(N, sparse=False)
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(8, 6), dpi=80)
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("u")
+    ax.set_zlim(-1.2, 1.2)
+
+    frames = []
+    for _, val in data.items():
+        frame = ax.plot_wireframe(xij, yij, val)
+        frames.append([frame])
+
+    ani = animation.ArtistAnimation(fig, frames, interval=100, blit=False, repeat_delay=1000)
+
+    ani.save("report/neumannwave.gif", writer="pillow", fps=10)
+    plt.close(fig)
+    print("Animation saved as report/neumannwave.gif")
 
 if __name__ == "__main__":
     test_convergence_wave2d()
     test_convergence_wave2d_neumann()
+    test_exact_wave2d()
     print("All tests passed!")
+    generate_animation()
