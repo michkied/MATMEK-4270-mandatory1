@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 import sympy as sp
 from scipy import sparse
@@ -56,11 +54,9 @@ class Poisson2D:
         A : scipy sparse LIL matrix
             The vectorized Laplace operator
         """
-        dx = dy = self.p.L / N
-        D2x = (1./dx**2)*self.p.D2(N, dx)
-        D2y = (1./dy**2)*self.p.D2(N, dy)
-        return (sparse.kron(D2x, sparse.eye(N+1)) +
-                sparse.kron(sparse.eye(N+1), D2y))
+        D2 = self.p.D2(N, self.p.L / N)
+        return (sparse.kron(D2, sparse.eye(N+1)) +
+                sparse.kron(sparse.eye(N+1), D2))
 
     def assemble(
         self, N: int, f: sp.Expr, ue: sp.Expr
@@ -103,9 +99,9 @@ class Poisson2D:
             A[i, i] = 1
         A = A.tocsr()
         
-        b = func.flatten()
-        b[bound] = 0
-
+        b = func.ravel()
+        ue_mesh = self.meshfunction(ue, xij, yij)
+        b[bound] = ue_mesh.ravel()[bound]
         return A,b
 
     def meshfunction(self, u: sp.Expr, xij: np.ndarray, yij: np.ndarray) -> np.ndarray:
@@ -119,7 +115,7 @@ class Poisson2D:
         -------
         array - The input function as a mesh function
         """
-        f = sp.lambdify((x, y), u, modules='numpy')
+        f = sp.lambdify((x, y), u)
         return f(xij, yij)
         
 
@@ -144,11 +140,11 @@ class Poisson2D:
         float - The l2-error
 
         """
-        error = 0
-        for val in u:
-            
-        return math.sqrt(error)
-        raise NotImplementedError("The l2_error method is not implemented yet.")
+        N = len(u) - 1
+        d = self.p.L / N
+        xij, yij = self.create_mesh(N)
+        ue_mesh = self.meshfunction(ue, xij, yij)
+        return np.sqrt(d**2 * np.sum((ue_mesh - u) ** 2))
 
     def __call__(self, N: int, ue: sp.Expr) -> np.ndarray:
         """Solve Poisson's equation with a given manufactured solution
