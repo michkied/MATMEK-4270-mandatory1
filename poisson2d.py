@@ -189,7 +189,53 @@ class Poisson2D:
         The value of u(x, y)
 
         """
-        raise NotImplementedError("The eval method is not implemented yet.")
+        N = len(U) - 1
+        d = self.p.L / N
+        xij, yij = self.create_mesh(N)
+
+        def Lagrangebasis(xj, x=x):
+            """Construct Lagrange basis for points in xj
+
+            Parameters
+            ----------
+            xj : array
+                Interpolation points (nodes)
+            x : Sympy Symbol
+
+            Returns
+            -------
+            Lagrange basis as a list of Sympy functions
+            """
+            from sympy import Mul
+            n = len(xj)
+            ell = []
+            for i in range(n):
+                numer = Mul(*[(x - xj[j]) for j in range(n) if i != j])
+                denom = Mul(*[(xj[i] - xj[j]) for j in range(n) if i != j])
+                ell.append(numer/denom)
+            return ell
+
+        x_floor = int(x / d)
+        y_floor = int(y / d)
+        if np.abs(x_floor * d - x) < 1e-10 and np.abs(y_floor * d - y) < 1e-10:
+            return U[x_floor,y_floor]
+
+        x_floor = min(x_floor, N - 1)
+        y_floor = min(y_floor, N - 1)
+
+        lx = Lagrangebasis(xij[x_floor:x_floor+2, 0], x=x)
+        ly = Lagrangebasis(yij[0, y_floor:y_floor+2], x=y)
+
+        def Lagrangefunction2D(u, basisx, basisy):
+            N, M = u.shape
+            f = 0
+            for i in range(N):
+                for j in range(M):
+                    f += basisx[i]*basisy[j]*u[i, j]
+            return f
+
+        f = Lagrangefunction2D(U[x_floor:x_floor+2, y_floor:y_floor+2], lx, ly)
+        return f.subs({x: x, y: y})
 
 
 def test_convergence_poisson2d():
