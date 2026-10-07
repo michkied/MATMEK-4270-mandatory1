@@ -1,0 +1,120 @@
+\documentclass[english,notitlepage]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry} % Adjust this value to make margins smaller or larger
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{float}
+%\usepackage[section]{placeins}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tikz}
+\usepackage{subcaption}
+\usepackage[mathscr]{eucal}
+\usepackage{siunitx}
+
+
+% defines the color of hyperref objects
+% Blending two colors:  blue!80!black  =  80% blue and 20% black
+\hypersetup{ % this is just my personal choice, feel free to change things
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}}
+
+\newcommand*{\ihat}{\hat{\imath}}
+
+\begin{document}
+
+\title{MATMEK-4270 Assignment 1}
+\author{Michał Kiedrzyński}
+\date{}
+\maketitle 
+
+\section{Exact solution to the 2D wave equation}
+The wave equation is given as
+\begin{equation}\label{eq:wave}
+    \frac{\partial^2u}{\partial t^2} = c^2 \nabla^2u .
+\end{equation}
+
+To show that the solution
+\begin{equation}\label{eq:exact}
+    u(t,x,y) = e^{\ihat\left(k_xx+k_yy-\omega t\right)}
+\end{equation}
+satisfies this equation, we first find partial derivarives with respect to all variables:
+\begin{align*}
+    \frac{\partial u}{\partial t} &= -\ihat\omega u \\
+    \frac{\partial^2 u}{\partial t^2} &= \ihat^2\omega^2 u = -\omega^2 u \\
+    \frac{\partial u}{\partial x} &= \ihat k_x u \\
+    \frac{\partial^2 u}{\partial x^2} &= \ihat^2 k_x^2 u = -k_x^2 u \\
+    \frac{\partial u}{\partial y} &= \ihat k_y u \\
+    \frac{\partial^2 u}{\partial y^2} &= \ihat^2 k_y^2 u = -k_y^2 u \\
+\end{align*}
+and substitute them into eq. \ref{eq:wave}:
+\begin{equation*}
+    \frac{\partial^2u}{\partial t^2} = c^2 \left(\frac{\partial^2u}{\partial x^2} + \frac{\partial^2u}{\partial y^2}\right) \quad \Rightarrow \quad -\omega^2 u = c^2 \left( -k_x^2 u -k_y^2 u\right) \quad \Rightarrow \quad 
+\end{equation*}
+\begin{equation}\label{eq:const}
+    \omega^2 = c^2 \left( k_x^2 + k_y^2\right).
+\end{equation}
+We arrive at a conclusion that solution \ref{eq:exact} satisfies the wave equation as long as the relation \ref{eq:const} between parameters holds.
+
+\section{Dispersion coefficient}
+
+Given discretized equation:
+\begin{equation*}
+\frac{u^{n+1}_{i,j} - 2u^n_{i,j} + u^{n-1}_{i, j}}{\Delta t^2} =
+ c^2 \left(\frac{u^n_{i+1,j} - 2u^n_{i,j} + u^n_{i-1, j}}{h^2} + \frac{u^n_{i,j+1} - 2u^n_{i,j} + u^n_{i, j-1}}{h^2}\right)
+\end{equation*}
+we rearrange it to get:
+\begin{equation*}
+u^{n+1}_{i,j} - 2u^n_{i,j} + u^{n-1}_{i, j} = \frac{c^2 \Delta t^2}{h^2}
+  \left(u^n_{i+1,j} - 2u^n_{i,j} + u^n_{i-1, j} + u^n_{i,j+1} - 2u^n_{i,j} + u^n_{i, j-1}\right)
+\end{equation*}
+and substitute the assumed CFL number $C=1/\sqrt{2}$ producing:
+\begin{equation*}
+2\left(u^{n+1}_{i,j} - 2u^n_{i,j} + u^{n-1}_{i, j}\right) =
+  u^n_{i+1,j} - 2u^n_{i,j} + u^n_{i-1, j} + u^n_{i,j+1} - 2u^n_{i,j} + u^n_{i, j-1}.
+\end{equation*}
+
+We then subtract $-4u^n_{i,j}$ from both sides:
+\begin{equation*}
+2\left(u^{n+1}_{i,j} + u^{n-1}_{i, j}\right) = u^n_{i+1,j} + u^n_{i-1, j} + u^n_{i,j+1} + u^n_{i, j-1}
+\end{equation*}
+
+and proceed by replacing $u$ with the discretized exact solution:
+\begin{align*}
+    \text{LHS} &= 2\left(e^{\ihat(kh(i+j)-\tilde{\omega}(n+1)\Delta t)} + e^{\ihat(kh(i+j)-\tilde{\omega}(n-1)\Delta t)}\right) = 2e^{\ihat kh(i+j)}\left(e^{-\ihat\tilde{\omega}(n+1)\Delta t} + e^{-\ihat\tilde{\omega}(n-1)\Delta t}\right) = \\
+    &= 2e^{\ihat kh(i+j)}e^{-\ihat \tilde{\omega}n\Delta t}\left(e^{-\ihat\tilde{\omega}\Delta t} + e^{\ihat\tilde{\omega}\Delta t}\right) \\[12pt]
+    \text{RHS} &= e^{\ihat(kh(i+1+j)-\tilde{\omega}n\Delta t)} + e^{\ihat(kh(i-1+j)-\tilde{\omega}n\Delta t)} + e^{\ihat(kh(i+j+1)-\tilde{\omega}n\Delta t)} + e^{\ihat(kh(i+j-1)-\tilde{\omega}n\Delta t)} = \\
+    &= 2\left(e^{\ihat(kh(i+j+1)-\tilde{\omega}n\Delta t)} + e^{\ihat(kh(i+j-1)-\tilde{\omega}n\Delta t)}\right) = 2e^{-\ihat \tilde{\omega}n\Delta t}\left(e^{\ihat kh(i+j+1)} + e^{\ihat kh(i+j-1)}\right) = \\
+    &= 2e^{-\ihat \tilde{\omega}n\Delta t}e^{\ihat kh(i+j)}\left(e^{\ihat kh} + e^{-\ihat kh}\right)
+\end{align*}
+\begin{align*}
+    \text{LHS} &= \text{RHS} \\
+2e^{\ihat kh(i+j)}e^{-\ihat \tilde{\omega}n\Delta t}\left(e^{-\ihat\tilde{\omega}\Delta t} + e^{\ihat\tilde{\omega}\Delta t}\right) &= 2e^{-\ihat \tilde{\omega}n\Delta t}e^{\ihat kh(i+j)}\left(e^{\ihat kh} + e^{-\ihat kh}\right) \\
+e^{-\ihat\tilde{\omega}\Delta t} + e^{\ihat\tilde{\omega}\Delta t} &= e^{-\ihat kh} + e^{\ihat kh}
+\end{align*}
+
+which implies that:
+\begin{equation}\label{eq:k}
+    \tilde{\omega}\Delta t = kh \quad \Rightarrow \quad k = \frac{\tilde{\omega}\Delta t}{h}.
+\end{equation}
+
+Now, using the assumption that $k_x = k_y = k$, we substitute relation \ref{eq:k} to equation \ref{eq:const} producing:
+\begin{equation*}
+    \omega^2 = c^2 \left( k_x^2 + k_y^2\right) \quad \Rightarrow \quad \omega^2 = 2c^2k^2 \quad \Rightarrow \quad \omega = \sqrt{2} \frac{c\Delta t}{h}\tilde{\omega}.
+\end{equation*}
+
+Finally, we once again use the fact that $C=\frac{1}{\sqrt{2}}=\frac{c\Delta t}{h}$, which brings us to the conclusion:
+\begin{equation*}
+    \omega = \tilde{\omega}.
+\end{equation*}
+
+\end{document}
+

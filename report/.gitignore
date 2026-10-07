@@ -1,0 +1,18 @@
+# LaTeX Core Intermediate and Output Files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.out
+*.log
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.idx
+*.ind
+*.ilg
+*.run.xml
+*Notes.bib
